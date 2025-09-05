@@ -1,10 +1,126 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>My Electron App</title>
+    <title>useFlow</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .workspace {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+    </style>
   </head>
   <body>
-    <h1>Hello, Electron!</h1>
+    <h1>useFlow</h1>
+
+    <!-- Create Workspace -->
+    <h2>Create Workspace</h2>
+    <input id="workspaceName" placeholder="Workspace Name (e.g. CP)" />
+    <button id="createWorkspace">Add Workspace</button>
+
+    <div id="workspaceList"></div>
+
+    <script>
+  const workspaceList = document.getElementById("workspaceList");
+
+  // Load workspaces on start
+  window.electronAPI.loadWorkspaces().then((workspaces) => {
+    if (!workspaces) return;
+    workspaces.forEach(ws => renderWorkspace(ws.name, ws.actions));
+  });
+
+  document.getElementById("createWorkspace").addEventListener("click", () => {
+    const name = document.getElementById("workspaceName").value.trim();
+    if (!name) return alert("Enter a workspace name!");
+    renderWorkspace(name, []);
+    saveAll();
+  });
+
+  function renderWorkspace(name, actions) {
+    const div = document.createElement("div");
+    div.className = "workspace";
+    div.innerHTML = `
+      <h3>${name}</h3>
+      <select class="actionType">
+        <option value="chrome">Chrome Tab</option>
+        <option value="vscode">VS Code File</option>
+        <option value="terminal">Terminal</option>
+      </select>
+      <input class="actionValue" placeholder="Enter URL or File Path" />
+      <button class="addAction">Add Action</button>
+      <ul class="actions"></ul>
+      <button class="start">▶ Start ${name}</button>
+      <button class="delete">❌ Delete</button>
+    `;
+    workspaceList.appendChild(div);
+    // Delete workspace
+    div.querySelector(".delete").addEventListener("click", () => {
+      div.remove();   // Remove from UI
+      saveAll();      // Save updated list to JSON
+    });
+
+    const ul = div.querySelector(".actions");
+
+    // Load existing actions
+    actions.forEach(a => {
+      const li = document.createElement("li");
+      li.textContent = `${a.type}: ${a.value}`;
+      ul.appendChild(li);
+    });
+
+  // Add new action
+    div.querySelector(".addAction").addEventListener("click", async () => {
+    const type = div.querySelector(".actionType").value;
+    let value = div.querySelector(".actionValue").value.trim();
+
+    if (type === "vscode") {
+      // 👇 Browse for file instead of manual input
+      const pickedFile = await window.electronAPI.pickFile();
+      if (!pickedFile) return;
+      value = pickedFile;
+      div.querySelector(".actionValue").value = value; // show in input
+    }
+
+    if (!value) return alert("Enter a value!");
+    const li = document.createElement("li");
+    li.textContent = `${type}: ${value}`;
+    ul.appendChild(li);
+    saveAll();
+    });
+
+
+    // Start workspace
+    div.querySelector(".start").addEventListener("click", () => {
+      const actions = [];
+      ul.querySelectorAll("li").forEach(li => {
+        const [type, ...rest] = li.textContent.split(":");
+        actions.push({ type: type.trim(), value: rest.join(":").trim() });
+      });
+      window.electronAPI.startWorkspace({ name, actions });
+    });
+  }
+  
+
+  function saveAll() {
+    const workspaces = [];
+    document.querySelectorAll(".workspace").forEach(div => {
+      const name = div.querySelector("h3").textContent;
+      const actions = [];
+      div.querySelectorAll("li").forEach(li => {
+        const [type, ...rest] = li.textContent.split(":");
+        actions.push({ type: type.trim(), value: rest.join(":").trim() });
+      });
+      workspaces.push({ name, actions });
+    });
+    window.electronAPI.saveWorkspaces(workspaces);
+  }
+  
+</script>
+
   </body>
 </html>
