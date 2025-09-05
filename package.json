@@ -1,0 +1,24 @@
+{
+  "name": "useflow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LightCreator1007/useFlow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LightCreator1007/useFlow/issues"
+  },
+  "homepage": "https://github.com/LightCreator1007/useFlow#readme",
+  "devDependencies": {
+    "electron": "^38.0.0"
+  }
+}
